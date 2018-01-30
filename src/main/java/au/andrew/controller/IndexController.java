@@ -15,16 +15,15 @@ import java.sql.*;
 @Controller
 public class IndexController {
 
-    // JDBC variables for opening and managing connection
-    private static ResultSet rs;
     private String query = "";
     private DataProc dataProc = new DataProc();
     private boolean matchUpdated = false;
 
 
+
     @RequestMapping(method = RequestMethod.GET)
     @GetMapping("/")
-    public String index(Model m) {
+    public String index(Model a) {
         return "index";
     }
 
@@ -33,146 +32,23 @@ public class IndexController {
                               @RequestParam(value = "anotherUsername", required = false) String anotherUserName) {
 
         ModelAndView model = new ModelAndView();
-
+        RespondMaker respondMaker = new RespondMaker();
+        String[] resp;
         if (anotherUserName.trim().length() == 0) {
-            int score = 0;
-            int looses = 0;
-            StringBuilder statScore = new StringBuilder();
-            StringBuilder statDates = new StringBuilder();
-            String bufScore, bufDate;
-            query = "SELECT * FROM matches where team1score != -1 or team2score != -1;";
-            rs = dataProc.getData(query);
-
-            try {
-                while (rs.next()) {
-                    for (String st : rs.getString(3).split(";")) {
-                        if (mainUserName.toLowerCase().trim().equals(st.toLowerCase().trim())) {
-                            if ((rs.getInt(5) == 0)&&(rs.getInt(6) == 1)) looses++;
-                            score += rs.getInt(5);
-                            bufDate = rs.getString(2) + ";";
-                            bufScore = score + ";";
-                            statScore.append(bufScore);
-                            statDates.append(bufDate);
-                        }
-                    }
-                    for (String st : rs.getString(4).split(";")) {
-                        if (mainUserName.toLowerCase().trim().equals(st.toLowerCase().trim())) {
-                            if ((rs.getInt(6) == 0)&&(rs.getInt(5) == 1)) looses++;
-                            score += rs.getInt(6);
-                            bufDate = rs.getString(2) + ";";
-                            bufScore = score + ";";
-                            statScore.append(bufScore);
-                            statDates.append(bufDate);
-                        }
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                dataProc.conClose();
-            }
-
-            if (statDates.length() == 0)
-                if (mainUserName.length() != 0) mainUserName = "Hello, " + mainUserName + "! You are unregistered player! You need to play at lest 1 match.";
-                else mainUserName = "Hello! You are unregistered player! You need to play at lest 1 match.";
-            else mainUserName = "Hello, " + mainUserName + "!";
-
-            model.addObject("mainUserNameAttr", mainUserName.trim());
-            model.addObject("mUstatScoreAttr", statScore.toString());
-            model.addObject("mUstatSatesAttr", statDates.toString());
-            model.addObject("mUscoreAttr", String.valueOf(score));
-            model.addObject("mUloosesAttr", String.valueOf(looses));
-            model.addObject("anotherUNameAttr", "");
-            model.addObject("anotherUscoreAttr", "");
-            model.addObject("anotherUloosesAttr", "");
-            model.addObject("anotherUpresenceAttr", "");
+            resp = respondMaker.returnResponse(mainUserName);
 
         } else {
-            int score = 0;
-            int looses = 0;
-            int scoreCompetitor = 0;
-            int loosesCompetitor = 0;
-            boolean competitor = false;
-            boolean comPres = false;
-
-            StringBuilder statScore = new StringBuilder();
-            StringBuilder statDates = new StringBuilder();
-            String bufScore, bufDate;
-            query = "SELECT * FROM matches where team1score != -1 or team2score != -1;";
-            rs = dataProc.getData(query);
-
-            try {
-                while (rs.next()) {
-                    competitor = false;
-                    for (String st : rs.getString(3).split(";")) {
-                        if (mainUserName.toLowerCase().trim().equals(st.toLowerCase().trim())) {
-                            competitor = true;
-                            if ((rs.getInt(5) == 0)&&(rs.getInt(6) == 1)) looses++;
-                            score += rs.getInt(5);
-                            bufDate = rs.getString(2) + ";";
-                            bufScore = score + ";";
-                            statScore.append(bufScore);
-                            statDates.append(bufDate);
-                            break;
-                        }
-                    }
-                    if (competitor) {
-                        for (String st : rs.getString(4).split(";")) {
-                            if (anotherUserName.toLowerCase().trim().equals(st.toLowerCase().trim())) {
-                                comPres = true;
-                                if ((rs.getInt(6) == 0)&&(rs.getInt(5) == 1)) loosesCompetitor++;
-                                scoreCompetitor += rs.getInt(6);
-                                break;
-                            }
-                        }
-                    }
-                    competitor = false;
-                    for (String st : rs.getString(4).split(";")) {
-                        if (mainUserName.toLowerCase().trim().equals(st.toLowerCase().trim())) {
-                            competitor = true;
-                            if ((rs.getInt(5) == 1)&&(rs.getInt(6) == 0)) looses++;
-                            score += rs.getInt(6);
-                            bufDate = rs.getString(2) + ";";
-                            bufScore = score + ";";
-                            statScore.append(bufScore);
-                            statDates.append(bufDate);
-                            break;
-                        }
-                    }
-                    if (competitor) {
-                        for (String st : rs.getString(3).split(";")) {
-                            if (anotherUserName.toLowerCase().trim().equals(st.toLowerCase().trim())) {
-                                comPres = true;
-                                if ((rs.getInt(5) == 0)&&(rs.getInt(6) == 1)) loosesCompetitor++;
-                                scoreCompetitor += rs.getInt(5);
-                                break;
-                            }
-                        }
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                dataProc.conClose();
-            }
-
-            if (statDates.length() == 0)
-                if (mainUserName.length() != 0) mainUserName = "Hello, " + mainUserName + "! You are unregistered player! You need to play at lest 1 match.";
-                else mainUserName = "Hello! You are unregistered player! You need to play at lest 1 match.";
-            else if (comPres) mainUserName = "Hello, " + mainUserName + "!";
-            else mainUserName = "Hello, " + mainUserName + "! There is no " + anotherUserName + " player!";
-
-            model.addObject("mainUserNameAttr", mainUserName.trim());
-            model.addObject("mUstatScoreAttr", statScore.toString());
-            model.addObject("mUstatSatesAttr", statDates.toString());
-            model.addObject("mUscoreAttr", String.valueOf(score));
-            model.addObject("mUloosesAttr", String.valueOf(looses));
-            model.addObject("anotherUNameAttr", anotherUserName);
-            model.addObject("anotherUscoreAttr",String.valueOf(scoreCompetitor));
-            model.addObject("anotherUloosesAttr", String.valueOf(loosesCompetitor));
-            model.addObject("anotherUpresenceAttr", comPres);
+            resp = respondMaker.returnResponse(mainUserName, anotherUserName);
         }
-
+        model.addObject("mainUserNameAttr", resp[0]);
+        model.addObject("mUstatScoreAttr", resp[1]);
+        model.addObject("mUstatSatesAttr", resp[2]);
+        model.addObject("mUscoreAttr", resp[3]);
+        model.addObject("mUloosesAttr", resp[4]);
+        model.addObject("anotherUNameAttr", resp[5]);
+        model.addObject("anotherUscoreAttr", resp[6]);
+        model.addObject("anotherUloosesAttr", resp[7]);
+        model.addObject("anotherUpresenceAttr", resp[8]);
         model.setViewName("login");
         return model;
     }
@@ -182,7 +58,7 @@ public class IndexController {
 
         ModelAndView model = new ModelAndView();
         query = "SELECT * FROM matches ORDER BY id DESC LIMIT 1;";
-        rs = dataProc.getData(query);
+        ResultSet rs = dataProc.getData(query);
 
         try {
             while (rs.next()) {
@@ -221,7 +97,7 @@ public class IndexController {
 
         ModelAndView model = new ModelAndView();
 
-        if ((!(team1.equals("")||team1.equals(" ")))&&(!(team2.equals("")||team2.equals(" ")))){
+        if ((!(team1.equals("") || team1.equals(" "))) && (!(team2.equals("") || team2.equals(" ")))) {
             if (team1score.equals(" ") || team1score.equals("")) team1score = "-1";
             if (team2score.equals(" ") || team2score.equals("")) team2score = "-1";
             if (!team1score.equals("-1") && !team2score.equals("-1") && matchUpdated) {

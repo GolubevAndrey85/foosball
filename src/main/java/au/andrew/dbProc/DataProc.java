@@ -14,6 +14,7 @@ public class DataProc {
     private static ResultSet rs;
 
 
+
     private Connection getCon(){
         try {
             Class.forName("com.mysql.jdbc.Driver");
